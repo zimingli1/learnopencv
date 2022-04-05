@@ -29,14 +29,20 @@ def vizualize_flow(img, flo, save, counter):
     flo = flow_viz.flow_to_image(flo)
     flo = cv2.cvtColor(flo, cv2.COLOR_RGB2BGR)
 
-    # concatenate, save and show images
-    img_flo = np.concatenate([img, flo], axis=0)
+    # save or concatenate, show images
     if save:
-        cv2.imwrite(f"demo_frames/frame_{str(counter)}.jpg", img_flo)
-    cv2.imshow("Optical Flow", img_flo / 255.0)
-    k = cv2.waitKey(25) & 0xFF
-    if k == 27:
-        return False
+        # cv2.imwrite(f"demo_frames/frame_{str(counter)}.jpg", img_flo)
+
+        # write the flo frame to the output video
+        global out
+        out.write(flo)
+    else:
+        img_flo = np.concatenate([img, flo], axis=0) 
+        cv2.imshow("Optical Flow", img_flo / 255.0) 
+        k = cv2.waitKey(5) & 0xFF
+        if k == 27:
+            return False
+
     return True
 
 
@@ -54,12 +60,7 @@ def inference(args):
     # get the RAFT model
     model = RAFT(args)
     # load pretrained weights
-    pretrained_weights = torch.load(args.model)
-
-    save = args.save
-    if save:
-        if not os.path.exists("demo_frames"):
-            os.mkdir("demo_frames")
+    pretrained_weights = torch.load(args.model, map_location=torch.device('cpu'))
 
     if torch.cuda.is_available():
         device = "cuda"
@@ -83,12 +84,26 @@ def inference(args):
     cap = cv2.VideoCapture(video_path)
     ret, frame_1 = cap.read()
 
+    # determine if we want to save the flow video
+    save = args.save
+    if save:
+        if not os.path.exists("demo_frames"):
+            os.mkdir("demo_frames")
+
+        # prepare for output video
+        global fps, fourcc, out
+        fps = cap.get(cv2.CAP_PROP_FPS) # get fps
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter('demo_frames\\' + video_path[video_path.rfind('\\') + 1:video_path.rfind('.')] + '.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))  # last two params: fpms, (width, height)
+
+    
     # frame preprocessing
     frame_1 = frame_preprocess(frame_1, device)
 
     counter = 0
     with torch.no_grad():
         while True:
+            print(counter)
             # read the next frame
             ret, frame_2 = cap.read()
             if not ret:
@@ -103,6 +118,11 @@ def inference(args):
                 break
             frame_1 = frame_2
             counter += 1
+
+    cap.release()
+    if save:
+        out.release()
+    print('Done')
 
 
 def main():
