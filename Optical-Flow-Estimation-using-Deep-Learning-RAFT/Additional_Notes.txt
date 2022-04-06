@@ -1,0 +1,13 @@
+If torch or torchvision install failed:
+pip install torch===1.6.0 torchvision===0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
+
+command for single video:
+python inference.py --model .\models\pretrained_models\raft-sintel.pth --video .\videos\W_70.mp4 --save
+
+Powershell Commands to generate all videos in a given folder:
+1. set powershell location to current directory:
+Set-Location "D:\Traffic Project\learnopencv\Optical-Flow-Estimation-using-Deep-Learning-RAFT"
+
+2. run a powershell command to generate optical flows of a given folder's path:
+(make sure only contains .mp4 videos in folder's path)
+.\Optical_Flows.ps1  "D:\Traffic Project\learnopencv\input videos"

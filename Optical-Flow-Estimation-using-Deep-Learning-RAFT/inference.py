@@ -57,6 +57,8 @@ def get_cpu_model(model):
 
 
 def inference(args):
+    
+
     # get the RAFT model
     model = RAFT(args)
     # load pretrained weights
@@ -80,6 +82,8 @@ def inference(args):
     model.eval()
 
     video_path = args.video
+    video_name = video_path[video_path.rfind('\\') + 1:video_path.rfind('.')] # get video name without extension
+
     # capture the video and get the first frame
     cap = cv2.VideoCapture(video_path)
     ret, frame_1 = cap.read()
@@ -94,7 +98,7 @@ def inference(args):
         global fps, fourcc, out
         fps = cap.get(cv2.CAP_PROP_FPS) # get fps
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('demo_frames\\' + video_path[video_path.rfind('\\') + 1:video_path.rfind('.')] + '.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))  # last two params: fpms, (width, height)
+        out = cv2.VideoWriter('demo_frames\\' + video_name + '.mp4', fourcc, fps, (int(cap.get(3)), int(cap.get(4))))  # last two params: fpms, (width, height)
 
     
     # frame preprocessing
@@ -103,7 +107,8 @@ def inference(args):
     counter = 0
     with torch.no_grad():
         while True:
-            print(counter)
+            if counter == 2:
+                break
             # read the next frame
             ret, frame_2 = cap.read()
             if not ret:
@@ -122,7 +127,6 @@ def inference(args):
     cap.release()
     if save:
         out.release()
-    print('Done')
 
 
 def main():
