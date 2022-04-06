@@ -107,8 +107,6 @@ def inference(args):
     counter = 0
     with torch.no_grad():
         while True:
-            if counter == 2:
-                break
             # read the next frame
             ret, frame_2 = cap.read()
             if not ret:
